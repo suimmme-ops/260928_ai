@@ -1,19 +1,17 @@
-# :earth_americas: GDP dashboard template
+# Streamlit 컴포넌트 쇼케이스
 
-A simple Streamlit app showing the GDP of different countries in the world.
+입력 위젯, 차트, 레이아웃, 상태 메시지, 폼, 데이터 표 등 Streamlit 웹 앱에서 활용할 수 있는 요소를 둘러보는 예제입니다. 화면의 샘플 데이터는 앱 안에서 생성되므로 별도의 데이터 파일 없이 실행할 수 있습니다.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://gdp-dashboard-template.streamlit.app/)
+## 실행 방법
 
-### How to run it on your own machine
+1. 필요한 패키지를 설치합니다.
 
-1. Install the requirements
-
-   ```
-   $ pip install -r requirements.txt
+   ```bash
+   pip install -r requirements.txt
    ```
 
-2. Run the app
+2. 앱을 실행합니다.
 
-   ```
-   $ streamlit run streamlit_app.py
+   ```bash
+   streamlit run streamlit_app.py
    ```
