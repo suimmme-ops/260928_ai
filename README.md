@@ -11,3 +11,15 @@
 pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
+
+## 내용 편집 · 저장
+
+1. 사이드바(왼쪽 위 `>` 버튼)를 열고 비밀번호를 입력하면 편집 모드가 켜집니다.
+2. 내용을 고친 뒤 **💾 저장하기** 를 누르면 `profile.json` 에 저장되고, 사이트에 접속하는 모든 사람에게 그 내용이 보입니다.
+3. 재시작·재배포 후에도 유지하려면 `profile.json` 을 GitHub에 커밋하세요.
+   (배포된 사이트에서 편집했다면 **⬇️ profile.json 내려받기** 로 받은 파일을 저장소에 올리면 됩니다.)
+
+### 비밀번호 설정
+
+- 로컬: `.streamlit/secrets.toml` 파일에 `admin_password = "원하는 비밀번호"` (git에 올라가지 않음)
+- Streamlit Cloud: 앱 설정 → **Secrets** 에 같은 줄을 추가

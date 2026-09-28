@@ -1,5 +1,8 @@
+import hmac
 import html
+import json
 import re
+from pathlib import Path
 
 import streamlit as st
 
@@ -7,7 +10,7 @@ st.set_page_config(
     page_title="Hello, Teacher! · 자기소개",
     page_icon="🍎",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 PALETTE = {
@@ -51,17 +54,70 @@ DEFAULTS = {
     "body5": "궁금한 건 언제든 **교무실 3층** 또는 알림장으로 편하게 물어봐 주세요.",
 }
 
-for key, value in DEFAULTS.items():
+PROFILE_PATH = Path(__file__).with_name("profile.json")
+
+
+def load_profile():
+    """저장된 profile.json 을 읽고, 빠진 항목은 기본값으로 채운다."""
+    profile = dict(DEFAULTS)
+    if PROFILE_PATH.exists():
+        saved = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
+        profile.update({k: v for k, v in saved.items() if k in DEFAULTS})
+    return profile
+
+
+def current_profile():
+    return {key: st.session_state[key] for key in DEFAULTS}
+
+
+def save_profile():
+    PROFILE_PATH.write_text(
+        json.dumps(current_profile(), ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    st.session_state.saved_flash = True
+
+
+def revert_to_saved():
+    st.session_state.update(load_profile())
+
+
+# 방문자는 항상 저장된 내용을 보고, 편집 중인 관리자는 자기 세션의 입력값을 유지한다.
+for key, value in load_profile().items():
     st.session_state.setdefault(key, value)
 
 
-def reset_all():
-    for key, value in DEFAULTS.items():
-        st.session_state[key] = value
+def admin_password():
+    try:
+        return st.secrets.get("admin_password", "")
+    except FileNotFoundError:  # secrets.toml 이 아예 없는 경우
+        return ""
+
+
+def check_password():
+    expected = admin_password()
+    typed = st.session_state.get("password_input", "")
+    st.session_state.is_admin = bool(expected) and hmac.compare_digest(typed, expected)
+    st.session_state.password_failed = not st.session_state.is_admin
+    st.session_state.password_input = ""
+
+
+def logout():
+    st.session_state.is_admin = False
 
 
 # ---------- 사이드바 편집기 ----------
-with st.sidebar:
+def render_login():
+    st.markdown("### 🔒 편집 모드")
+    if not admin_password():
+        st.warning("비밀번호가 설정되지 않았어요. Secrets에 `admin_password` 를 추가해 주세요.")
+        return
+    st.text_input("비밀번호", type="password", key="password_input", on_change=check_password)
+    if st.session_state.get("password_failed"):
+        st.error("비밀번호가 맞지 않아요.")
+
+
+def render_editor():
     st.markdown("### ✏️ 자기소개 편집하기")
     st.caption("`==문장==` 은 형광펜 하이라이트, `**문장**` 은 굵게 표시돼요.")
 
@@ -102,7 +158,25 @@ with st.sidebar:
         st.text_input("타이틀", key="title5")
         st.text_area("내용", key="body5", height=90)
 
-    st.button("↺ 처음 예시로 되돌리기", on_click=reset_all, width="stretch")
+    st.button("💾 저장하기", on_click=save_profile, type="primary", width="stretch")
+    if st.session_state.pop("saved_flash", False):
+        st.success("저장했어요! 이제 사이트에 접속하면 이 내용이 보여요.")
+    st.download_button(
+        "⬇️ profile.json 내려받기",
+        json.dumps(current_profile(), ensure_ascii=False, indent=2),
+        file_name="profile.json",
+        mime="application/json",
+        width="stretch",
+    )
+    st.button("↺ 저장된 내용으로 되돌리기", on_click=revert_to_saved, width="stretch")
+    st.button("🔓 편집 모드 나가기", on_click=logout, width="stretch")
+
+
+with st.sidebar:
+    if st.session_state.get("is_admin"):
+        render_editor()
+    else:
+        render_login()
 
 
 # ---------- 텍스트 변환 ----------
